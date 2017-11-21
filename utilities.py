@@ -137,10 +137,14 @@ def read_image(path, fname, show, scale=1.0, crop=False):
 
 import itertools as it
 import sys
+import math
 if sys.version[0]=='2':
     it.zip_longest=it.izip_longest
+
 def grouper(iterable, n, fillvalue=None):
     "Collect data into fixed-length chunks or blocks"
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-    args = [iter(iterable)] * n
+    a = [iter(iterable)]
+    n=n if n <= len(a) else len(a)
+    args = a*n
     return it.zip_longest(*args, fillvalue=fillvalue)
