@@ -91,7 +91,7 @@ def main():
                                    data_path=FLAGS.train_data_path,
                                    crop=FLAGS.crop,
                                    scale=FLAGS.scale)
-                    checkpoint_file = os.path.join(FLAGS.log_dir, 'model.ckpt')
+                    checkpoint_file = os.path.join(FLAGS.tb_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_file, global_step=epoch)
                     # Evaluate against the training set.
 
