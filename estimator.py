@@ -58,7 +58,7 @@ def main():
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
                 batch_num += 1
                 batch_start_time = time.time()
-                if tensors is None or type(tensors) is type(None):
+                if tensors is None or type(tensors) is type(None) or len(tensors) == 0:
                     break
                 tensor_batch=target.generator(tensors,path=FLAGS.train_data_path, crop=FLAGS.crop)
                 if tensor_batch == []:
