@@ -13,13 +13,17 @@ class CarvanaTarget(Target):
         self.img_shape = ut.get_image_shape(self.sample, crop=self.crop_images,scale=scale) if num_pixels == None else num_pixels
 
     def generator(self, tensors, path, crop,scale):
-        if tensors is None or len(tensors) == 0:
-            return []
         ret = []
-        for fn, l in tensors:
-            img = ut.read_image(path=path, fname=fn, show=False, crop=crop, scale=scale)
-            #print('One image:'+fn)
-            ret.append((img,l))
+        try:
+            for fn, l in tensors:
+                img = ut.read_image(path=path, fname=fn, show=False, crop=crop, scale=scale)
+                #print('One image:'+fn)
+                ret.append((img,l))
+
+        except TypeError as te:
+            print("Got a TypeError, tensors are {tensors}, path is {path}, crop is {crop}, scale is {scale}".format(tensors=tensors, path=path, crop=crop, scale=scale))
+            return []
+
         return ret
 
     def get_tensor_list(self,  path, num_classes=16, num = None, onehot=False):
