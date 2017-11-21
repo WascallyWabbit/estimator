@@ -57,7 +57,7 @@ def main():
             batch_num = 0
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
                 batch_start_time = time.time()
-                if tensors == None:
+                if tensors == None or type(tensors) is type(None):
                     break
                 tensor_batch=target.generator(tensors,path=FLAGS.train_data_path, crop=FLAGS.crop)
                 imgs = [tupl[0] for tupl in tensor_batch]
