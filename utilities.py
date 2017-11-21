@@ -144,7 +144,7 @@ if sys.version[0]=='2':
 def grouper(iterable, n, fillvalue=None):
     "Collect data into fixed-length chunks or blocks"
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-    a = [iter(iterable)]
-    n=n if n <= len(a) else len(a)
-    args = a*n
+    a = [iter(iterable)]*n
+    args= [n for n in a if n is not None]
+
     return it.zip_longest(*args, fillvalue=fillvalue)

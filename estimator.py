@@ -55,6 +55,7 @@ def main():
             tensor_list_train = target.get_tensor_list(path=FLAGS.train_data_path)
             tensor_list_test = target.get_tensor_list(path=FLAGS.test_data_path)
             batch_num = 0
+            loss=0.0
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
                 batch_num += 1
                 batch_start_time = time.time()
