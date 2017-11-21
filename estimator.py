@@ -17,10 +17,10 @@ def main():
     FLAGS, unparsed = ut.parseArgs()
     # TEST_DATA_PATH      = FLAGS.test_data_path
     SAMPLE_FILE = FLAGS.train_data_path + FLAGS.sample
-    IMG_SHAPE   = ut.get_image_shape(crop=FLAGS.crop, filename=SAMPLE_FILE)
+    IMG_SHAPE   = ut.get_image_shape(crop=FLAGS.crop, filename=SAMPLE_FILE,scale=FLAGS.scale)
 
     if FLAGS.target == 'carvana':
-        target = CarvanaTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,crop_images=FLAGS.crop)
+        target = CarvanaTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,crop_images=FLAGS.crop,scale=FLAGS.scale)
     else:
         return
 
@@ -60,7 +60,7 @@ def main():
                 batch_start_time = time.time()
                 if tensors is None or type(tensors) is type(None) or len(tensors) == 0:
                     break
-                tensor_batch=target.generator(tensors,path=FLAGS.train_data_path, crop=FLAGS.crop)
+                tensor_batch=target.generator(tensors,path=FLAGS.train_data_path, crop=FLAGS.crop,scale=FLAGS.scale)
                 if tensor_batch == []:
                     break
                 imgs = [tupl[0] for tupl in tensor_batch]

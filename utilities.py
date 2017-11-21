@@ -54,9 +54,9 @@ def parseArgs():
     # parser.add_argument('--show', type=bool,
     #                     default=False,
     #                     help='Show some images?')
-    # parser.add_argument('--scale', type=float,
-    #                     default=1.0,
-    #                     help='Scaling factor for images')
+    parser.add_argument('--scale', type=float,
+                        default=1.0,
+                        help='Scaling factor for images')
     parser.add_argument('--epochs', type=int,
                         default=1,
                         help='Epochs')
@@ -76,7 +76,7 @@ def parseArgs():
 import PIL.Image
 import numpy as np
 import matplotlib.pyplot as plt
-def get_image_shape(filename="SAMPLE_MNIST_FILE", crop =True):
+def get_image_shape(filename="SAMPLE_MNIST_FILE", crop =True, scale=1.0):
     import PIL.Image
     mm = PIL.Image.open(filename)
     if crop == True:
@@ -85,7 +85,8 @@ def get_image_shape(filename="SAMPLE_MNIST_FILE", crop =True):
         x1 = 3 * mm.width / 4
         y1 = 3 * mm.height / 4
         mm = mm.crop((x0, y0, x1, y1))
-
+    if scale != 1.0:
+        mm = mm.resize((int(mm.size[0] / scale), int(mm.size[1] / scale)))
     mma = np.array(mm)
 
 #    mma = mma.flatten('F')
