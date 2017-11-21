@@ -54,17 +54,18 @@ def main():
             # get train, test, validate(?) lists
             tensor_list_train = target.get_tensor_list(path=FLAGS.train_data_path)
             tensor_list_test = target.get_tensor_list(path=FLAGS.test_data_path)
-            batch_num = 0
+            batch_num = 1
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
+                batch_num += 1
                 batch_start_time = time.time()
-                if tensors == None or type(tensors) is type(None):
+                if tensors is None or type(tensors) is type(None):
                     break
                 tensor_batch=target.generator(tensors,path=FLAGS.train_data_path, crop=FLAGS.crop)
                 imgs = [tupl[0] for tupl in tensor_batch]
                 labels = [tupl[1] for tupl in tensor_batch]
 
                 _, loss=sess.run([train_op, loss_op], feed_dict={image_placeholder:imgs, label_placeholder:labels})
-                print('Loss:%f, batch elapsed time %.3f, batch %d of %d'% (loss, time.time() - batch_start_time, batch_num, len(tensor_list_train)//FLAGS.batch_size))
+                print('Loss:%f, batch elapsed time %.3f, batch %d of %d'% (loss, time.time() - batch_start_time, batch_num, 1+(len(tensor_list_train)//FLAGS.batch_size)))
 
             epoch_total_time = time.time() - epoch_start_time
             print('Epoch time:%.3f secs'% (epoch_total_time))
