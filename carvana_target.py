@@ -118,9 +118,11 @@ class CarvanaTarget(Target):
         num_examples = steps_per_epoch * batch_size
         for step in range(steps_per_epoch):
             for tensors in ut.grouper(tensor_list, batch_size):
-                if tensors == None or len(tensors) < batch_size:
+                if tensors is None or len(tensors) < batch_size:
                     break
                 tensor_batch=self.generator(tensors, path=data_path, crop=crop,scale=scale)
+                if len(tensor_batch) < batch_size:
+                    break
                 imgs = [tupl[0] for tupl in tensor_batch]
                 labels = [tupl[1] for tupl in tensor_batch]
                 true_count + sess.run(eval_op, feed_dict = {pl_imgs:imgs, pl_labels:labels})
