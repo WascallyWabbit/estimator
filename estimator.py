@@ -89,7 +89,8 @@ def main():
                                    tensor_list=tensor_list_train,
                                    batch_size=FLAGS.batch_size,
                                    data_path=FLAGS.train_data_path,
-                                   crop=FLAGS.crop)
+                                   crop=FLAGS.crop,
+                                   scale=FLAGS.scale)
                     checkpoint_file = os.path.join(FLAGS.log_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_file, global_step=epoch)
                     # Evaluate against the training set.
@@ -102,7 +103,8 @@ def main():
                                    tensor_list=tensor_list_test,
                                    batch_size=FLAGS.batch_size,
                                    data_path=FLAGS.test_data_path,
-                                   crop=FLAGS.crop)
+                                   crop=FLAGS.crop,
+                                   scale=FLAGS.scale)
 
     pass
 
