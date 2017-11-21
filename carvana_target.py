@@ -13,6 +13,8 @@ class CarvanaTarget(Target):
         self.img_shape = ut.get_image_shape(self.sample, crop=self.crop_images) if num_pixels == None else num_pixels
 
     def generator(self, tensors, path, crop):
+        if tensors is None:
+            return []
         ret = []
         for fn, l in tensors:
             img = ut.read_image(path=path, fname=fn, show=False, scale =1.0, crop=crop)

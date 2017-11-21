@@ -54,13 +54,15 @@ def main():
             # get train, test, validate(?) lists
             tensor_list_train = target.get_tensor_list(path=FLAGS.train_data_path)
             tensor_list_test = target.get_tensor_list(path=FLAGS.test_data_path)
-            batch_num = 1
+            batch_num = 0
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
                 batch_num += 1
                 batch_start_time = time.time()
                 if tensors is None or type(tensors) is type(None):
                     break
                 tensor_batch=target.generator(tensors,path=FLAGS.train_data_path, crop=FLAGS.crop)
+                if tensor_batch == []:
+                    break
                 imgs = [tupl[0] for tupl in tensor_batch]
                 labels = [tupl[1] for tupl in tensor_batch]
 
