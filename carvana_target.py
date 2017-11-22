@@ -106,7 +106,7 @@ class CarvanaTarget(Target):
 
     def evaluation(self, logits, labels):
         correct = tf.nn.in_top_k(logits,labels,1)
-        tf.summary.scalar('Logits', logits)
+        tf.summary.tensor_summary('Logits', logits)
         tf.summary.tensor_summary('Correct', correct)
         rs = tf.reduce_sum(tf.cast(correct,tf.int32))
         tf.summary.scalar('Reduced sum', rs)
