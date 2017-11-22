@@ -77,7 +77,7 @@ def main():
             epoch_total_time = time.time() - epoch_start_time
             print('Epoch time:%.3f secs'% (epoch_total_time))
             duration = time.time() - start_time
-            if epoch % 100 == 0:
+            if epoch % 3 == 0:
                 # Print status to stdout.
                 print('Step %d: loss = %.2f (%.3f sec)' % (epoch, loss, duration))
                 # Update the events file.
@@ -85,31 +85,31 @@ def main():
                 summary_writer.add_summary(summary_str, epoch)
                 summary_writer.flush()
 
-                if (epoch + 1) % 1000 == 0 or (epoch + 1) == FLAGS.epochs:
-                    print('Training Data Eval:')
-                    target.do_eval(sess=sess,
-                                   eval_op=evaluation_op,
-                                   pl_imgs=image_placeholder,
-                                   pl_labels=label_placeholder,
-                                   tensor_list=tensor_list_train,
-                                   batch_size=FLAGS.batch_size,
-                                   data_path=FLAGS.train_data_path,
-                                   crop=FLAGS.crop,
-                                   scale=FLAGS.scale)
-                    checkpoint_file = os.path.join(FLAGS.tb_dir, 'model.ckpt')
-                    saver.save(sess, checkpoint_file, global_step=epoch)
-                    # Evaluate against the training set.
+            if (epoch + 1) % 10 == 0 or (epoch + 1) == FLAGS.epochs:
+                print('Training Data Eval:')
+                target.do_eval(sess=sess,
+                               eval_op=evaluation_op,
+                               pl_imgs=image_placeholder,
+                               pl_labels=label_placeholder,
+                               tensor_list=tensor_list_train,
+                               batch_size=FLAGS.batch_size,
+                               data_path=FLAGS.train_data_path,
+                               crop=FLAGS.crop,
+                               scale=FLAGS.scale)
+                checkpoint_file = os.path.join(FLAGS.tb_dir, 'model.ckpt')
+                saver.save(sess, checkpoint_file, global_step=epoch)
+                # Evaluate against the training set.
 
-                    print('Test Data Eval:')
-                    target.do_eval(sess=sess,
-                                   eval_op=evaluation_op,
-                                   pl_imgs=image_placeholder,
-                                   pl_labels=label_placeholder,
-                                   tensor_list=tensor_list_test,
-                                   batch_size=FLAGS.batch_size,
-                                   data_path=FLAGS.test_data_path,
-                                   crop=FLAGS.crop,
-                                   scale=FLAGS.scale)
+                print('Test Data Eval:')
+                target.do_eval(sess=sess,
+                               eval_op=evaluation_op,
+                               pl_imgs=image_placeholder,
+                               pl_labels=label_placeholder,
+                               tensor_list=tensor_list_test,
+                               batch_size=FLAGS.batch_size,
+                               data_path=FLAGS.test_data_path,
+                               crop=FLAGS.crop,
+                               scale=FLAGS.scale)
 
     pass
 
