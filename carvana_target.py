@@ -66,58 +66,61 @@ class CarvanaTarget(Target):
         if img_shape == None:
             img_shape = self.img_shape
         pixel_num = img_shape[0] * img_shape[1] * img_shape[2]
+        with tf.name_scope('inference'):
+            with tf.name_scope('hidden1'):
+                weights = tf.truncated_normal([pixel_num, hidden1_units],
+                                              stddev=1.0/math.sqrt(float(pixel_num)),
+                                              name='weights')
+                biases = tf.Variable(tf.zeros([hidden1_units]),
+                                     name='biases')
 
-        with tf.name_scope('hidden1'):
-            weights = tf.truncated_normal([pixel_num, hidden1_units],
-                                          stddev=1.0/math.sqrt(float(pixel_num)),
-                                          name='weights')
-            biases = tf.Variable(tf.zeros([hidden1_units]),
-                                 name='biases')
+                hidden1 = tf.nn.relu(tf.matmul(images_placeholder, weights) + biases)
 
-            hidden1 = tf.nn.relu(tf.matmul(images_placeholder, weights) + biases)
+            with tf.name_scope('hidden2'):
+                weights = tf.truncated_normal([hidden1_units, hidden2_units],
+                                              stddev=1.0 / math.sqrt(float(pixel_num)),
+                                              name='weights')
+                biases = tf.Variable(tf.zeros([hidden2_units]),
+                                     name='biases')
 
-        with tf.name_scope('hidden2'):
-            weights = tf.truncated_normal([hidden1_units, hidden2_units],
-                                          stddev=1.0 / math.sqrt(float(pixel_num)),
-                                          name='weights')
-            biases = tf.Variable(tf.zeros([hidden2_units]),
-                                 name='biases')
+                hidden2 = tf.nn.relu(tf.matmul(hidden1, weights) + biases)
 
-            hidden2 = tf.nn.relu(tf.matmul(hidden1, weights) + biases)
+            with tf.name_scope('softmax_linear'):
+                weights = tf.truncated_normal([hidden2_units, num_classes],
+                                              stddev=1.0 / math.sqrt(float(hidden2_units)),
+                                              name='weights')
+                biases = tf.Variable(tf.zeros([num_classes]),
+                                     name='biases')
 
-        with tf.name_scope('softmax_linear'):
-            weights = tf.truncated_normal([hidden2_units, num_classes],
-                                          stddev=1.0 / math.sqrt(float(hidden2_units)),
-                                          name='weights')
-            biases = tf.Variable(tf.zeros([num_classes]),
-                                 name='biases')
+                logits = tf.matmul(hidden2, weights) + biases
 
-            logits = tf.matmul(hidden2, weights) + biases
-
-            return logits
+                return logits
 
 
     def loss(self,logits,labels):
-        labels=tf.to_int64(labels)
-        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=labels, logits=logits, name='xentropy')
+        with tf.name_scope('loser'):
+            labels=tf.to_int64(labels)
+            cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                labels=labels, logits=logits, name='xentropy')
 
-        return  tf.reduce_mean(cross_entropy, name='xentropy_mean')
+            return  tf.reduce_mean(cross_entropy, name='xentropy_mean')
 
     def evaluation(self, logits, labels):
-        correct = tf.nn.in_top_k(logits,labels,1)
-        tf.summary.tensor_summary('Logits', logits)
-        tf.summary.tensor_summary('Correct', correct)
-        rs = tf.reduce_sum(tf.cast(correct,tf.int32))
-        tf.summary.scalar('Reduced sum', rs)
-        return rs
+        with tf.name_scope('evaluation'):
+            correct = tf.nn.in_top_k(logits,labels,1,name='correct')
+            tf.summary.tensor_summary('Logits', logits)
+            tf.summary.tensor_summary('Correct', correct)
+            rs = tf.reduce_sum(tf.cast(correct,tf.int32), name='Reduce_sum')
+            tf.summary.scalar('Reduced sum', rs)
+            return rs
 
     def training(self, loss_op, learning_rate):
-        tf.summary.scalar('Training loss_op', loss_op)
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-        global_step = tf.Variable(0, name='global_step', trainable=False)
-        train_op = optimizer.minimize(loss_op, global_step=global_step)
-        return train_op
+        with tf.name_scope('training'):
+            tf.summary.scalar('Training loss_op', loss_op)
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate, name='Gradient_Descent_Optimizificator')
+            global_step = tf.Variable(0, name='global_step', trainable=False)
+            train_op = optimizer.minimize(loss_op, global_step=global_step)
+            return train_op
 
     def do_eval(self, sess, eval_op, pl_imgs, pl_labels, tensor_list, batch_size, data_path, crop, scale):
         true_count = 0
