@@ -49,6 +49,7 @@ def main():
 
 #chop list into chunx, process each one
         for epoch in range(FLAGS.epochs):
+            print('Epoch {epoch} of {epochs}'.format(epoch=epoch+1, epochs=FLAGS.epochs))
             epoch_start_time = time.time()
             # get tensor lists
             # get train, test, validate(?) lists
@@ -56,8 +57,10 @@ def main():
             tensor_list_test = target.get_tensor_list(path=FLAGS.test_data_path)
             batch_num = 0
             loss=0.0
+            batches = len(tensor_list_train) // FLAGS.batch_size
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
                 batch_num += 1
+                print('Batch {batch_num} of {batches} batches.'.format(batch_num=batch_num, batches=batches))
                 batch_start_time = time.time()
                 if tensors is None or len(tensors) < FLAGS.batch_size:
                     break
