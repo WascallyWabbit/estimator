@@ -106,13 +106,17 @@ class CarvanaTarget(Target):
 
     def evaluation(self, logits, labels):
         correct = tf.nn.in_top_k(logits,labels,1)
-        return  tf.reduce_sum(tf.cast(correct,tf.int32))
+        tf.summary.scalar('Logits', logits)
+        tf.summary.tensor_summary('Correct', correct)
+        rs = tf.reduce_sum(tf.cast(correct,tf.int32))
+        tf.summary.scalar('Reduced sum', rs)
+        return rs
 
-    def training(self, loss, learning_rate):
-        tf.summary.scalar('loss',loss)
+    def training(self, loss_op, learning_rate):
+        tf.summary.scalar('Training loss_op', loss_op)
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         global_step = tf.Variable(0, name='global_step', trainable=False)
-        train_op = optimizer.minimize(loss, global_step=global_step)
+        train_op = optimizer.minimize(loss_op, global_step=global_step)
         return train_op
 
     def do_eval(self, sess, eval_op, pl_imgs, pl_labels, tensor_list, batch_size, data_path, crop, scale):

@@ -31,7 +31,7 @@ def main():
         logits_op = target.inference(images_placeholder=image_placeholder,hidden1_units=FLAGS.hidden1_units,hidden2_units=FLAGS.hidden2_units)
         evaluation_op = target.evaluation(logits=logits_op, labels=label_placeholder)
         loss_op = target.loss(logits=logits_op, labels=label_placeholder)
-        train_op = target.training(learning_rate=FLAGS.learning_rate, loss=loss_op)
+        train_op = target.training(learning_rate=FLAGS.learning_rate, loss_op=loss_op)
 
         # Create a saver for writing training checkpoints.
         saver = tf.train.Saver()
