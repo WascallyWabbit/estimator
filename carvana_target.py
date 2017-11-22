@@ -4,6 +4,7 @@ import numpy as np
 import utilities as ut
 import tensorflow as tf
 import math
+from random import shuffle
 
 class CarvanaTarget(Target):
     def __init__(self, path, sample, crop_images = True, num_pixels=None, scale=1.0):
@@ -21,7 +22,7 @@ class CarvanaTarget(Target):
                 ret.append((img,l))
 
         except TypeError as te:
-            print("Got a TypeError, tensors are {tensors}, path is {path}, crop is {crop}, scale is {scale}".format(tensors=tensors, path=path, crop=crop, scale=scale))
+            #print("Got a TypeError, tensors are {tensors}, path is {path}, crop is {crop}, scale is {scale}".format(tensors=tensors, path=path, crop=crop, scale=scale))
             return []
 
         return ret
@@ -47,7 +48,9 @@ class CarvanaTarget(Target):
 
         # return must be list of tuples (filename, label array [one-hot bool])
  #       self.tensorlist = list(zip(jpgs[:num], labels[:num]))
-        return list(zip(jpgs[:num], labels[:num]))
+        ret = list(zip(jpgs[:num], labels[:num]))
+        shuffle(ret)
+        return ret
 
     def get_graph_placeholders(self, img_shape=None,num_classes=16, batch_size=10):
         if img_shape == None:
