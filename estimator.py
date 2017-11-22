@@ -11,6 +11,7 @@ from carvana_target import CarvanaTarget
 import tensorflow as tf
 import time
 import os
+import sys
 
 def main():
     # <editor-fold desc="Process parameters into globals">
@@ -60,7 +61,7 @@ def main():
             batches = len(tensor_list_train) // FLAGS.batch_size
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
                 batch_num += 1
-                print('Batch {batch_num} of {batches} batches.'.format(batch_num=batch_num, batches=batches))
+                #sys.stdout.write('Batch {batch_num} of {batches} batches.'.format(batch_num=batch_num, batches=batches))
                 batch_start_time = time.time()
                 if tensors is None or len(tensors) < FLAGS.batch_size:
                     break
@@ -71,7 +72,7 @@ def main():
                 labels = [tupl[1] for tupl in tensor_batch]
 
                 _, loss=sess.run([train_op, loss_op], feed_dict={image_placeholder:imgs, label_placeholder:labels})
-                #print('Loss:%f, batch elapsed time %.3f, batch %d of %d'% (loss, time.time() - batch_start_time, batch_num, 1+(len(tensor_list_train)//FLAGS.batch_size)))
+                print('Loss:%f, batch elapsed time %.3f, batch %d of %d'% (loss, time.time() - batch_start_time, batch_num, 1+(len(tensor_list_train)//FLAGS.batch_size)))
 
             epoch_total_time = time.time() - epoch_start_time
             print('Epoch time:%.3f secs'% (epoch_total_time))
