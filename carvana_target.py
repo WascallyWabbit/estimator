@@ -62,46 +62,63 @@ class CarvanaTarget(Target):
 
         return (images_placeholder, labels_placeholder)
 
-    def inference(self, images_placeholder, hidden1_units, hidden2_units, num_classes = 16, img_shape=None):
+    def init_weights(self,pixel_num,hidden1_units,hidden2_units,num_classes):
+        w1 = tf.truncated_normal([pixel_num, hidden1_units],
+                                      stddev=1.0 / math.sqrt(float(pixel_num)),
+                                      name='weights')
+
+        w2 = tf.truncated_normal([hidden1_units, hidden2_units],
+                                      stddev=1.0 / math.sqrt(float(pixel_num)),
+                                      name='weights')
+
+        wl = tf.truncated_normal([hidden2_units, num_classes],
+                                      stddev=1.0 / math.sqrt(float(hidden2_units)),
+                                      name='weights')
+
+        return (w1,w2,wl)
+
+
+
+    def inference(self, images_placeholder, hidden1_units, hidden2_units, w1,w2,wl, num_classes = 16, img_shape=None):
         if img_shape == None:
             img_shape = self.img_shape
         pixel_num = img_shape[0] * img_shape[1] * img_shape[2]
         with tf.name_scope('inference'):
             #tf.summary.image(tensor=images_placeholder, max_outputs=3,name="Carvana_images")
             with tf.name_scope('hidden1'):
-                weights = tf.truncated_normal([pixel_num, hidden1_units],
-                                              stddev=1.0/math.sqrt(float(pixel_num)),
-                                              name='weights')
+                # weights = tf.truncated_normal([pixel_num, hidden1_units],
+                #                               stddev=1.0/math.sqrt(float(pixel_num)),
+                #                               name='weights')
                 biases = tf.Variable(tf.zeros([hidden1_units]),
                                      name='biases')
 
-                hidden1 = tf.nn.relu(tf.matmul(images_placeholder, weights) + biases)
-                tf.summary.histogram(name='weights', values=weights)
+                hidden1 = tf.nn.relu(tf.matmul(images_placeholder, w1) + biases)
+                tf.summary.histogram(name='weights', values=w1)
                 tf.summary.histogram(name='biases', values=biases)
                 tf.summary.histogram(name='hidden1', values=hidden1)
 
             with tf.name_scope('hidden2'):
-                weights = tf.truncated_normal([hidden1_units, hidden2_units],
-                                              stddev=1.0 / math.sqrt(float(pixel_num)),
-                                              name='weights')
+                # weights = tf.truncated_normal([hidden1_units, hidden2_units],
+                #                               stddev=1.0 / math.sqrt(float(pixel_num)),
+                #                               name='weights')
                 biases = tf.Variable(tf.zeros([hidden2_units]),
                                      name='biases')
 
-                hidden2 = tf.nn.relu(tf.matmul(hidden1, weights) + biases)
-                tf.summary.histogram(name='weights', values=weights)
+                hidden2 = tf.nn.relu(tf.matmul(hidden1, w2) + biases)
+                tf.summary.histogram(name='weights', values=w2)
                 tf.summary.histogram(name='biases', values=biases)
                 tf.summary.histogram(name='hidden2', values=hidden2)
 
             with tf.name_scope('softmax_linear'):
-                weights = tf.truncated_normal([hidden2_units, num_classes],
-                                              stddev=1.0 / math.sqrt(float(hidden2_units)),
-                                              name='weights')
+                # weights = tf.truncated_normal([hidden2_units, num_classes],
+                #                               stddev=1.0 / math.sqrt(float(hidden2_units)),
+                #                               name='weights')
                 biases = tf.Variable(tf.zeros([num_classes]),
                                      name='biases')
 
-                logits = tf.matmul(hidden2, weights) + biases
+                logits = tf.matmul(hidden2, wl) + biases
 
-                tf.summary.histogram(name='weights', values=weights)
+                tf.summary.histogram(name='weights', values=wl)
                 tf.summary.histogram(name='biases', values=biases)
                 tf.summary.histogram(name='logits', values=logits)
 
