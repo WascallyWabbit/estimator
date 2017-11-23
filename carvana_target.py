@@ -67,6 +67,7 @@ class CarvanaTarget(Target):
             img_shape = self.img_shape
         pixel_num = img_shape[0] * img_shape[1] * img_shape[2]
         with tf.name_scope('inference'):
+            tf.summary.image(tensor=images_placeholder, max_outputs=3,name="Carvana_images")
             with tf.name_scope('hidden1'):
                 weights = tf.truncated_normal([pixel_num, hidden1_units],
                                               stddev=1.0/math.sqrt(float(pixel_num)),
