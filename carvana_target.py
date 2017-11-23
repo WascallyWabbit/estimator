@@ -116,7 +116,7 @@ class CarvanaTarget(Target):
                 biases = tf.Variable(tf.zeros([num_classes]),
                                      name='biases')
 
-                logits = tf.matmul(hidden2, wl) + biases
+                logits = tf.nn.softmax(tf.matmul(hidden2, wl) + biases)
 
                 tf.summary.histogram(name='weights', values=wl)
                 tf.summary.histogram(name='biases', values=biases)
