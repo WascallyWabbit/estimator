@@ -73,17 +73,25 @@ def main():
 
                 _, loss=sess.run([train_op, loss_op], feed_dict={image_placeholder:imgs, label_placeholder:labels})
                 print('Loss:%f, batch elapsed time %.3f, batch %d of %d'% (loss, time.time() - batch_start_time, batch_num, 1+(len(tensor_list_train)//FLAGS.batch_size)))
+                if batch_num-1 == 0:
+                    # Print status to stdout.
+                    print('Step %d: loss = %.2f [also touching up TBoard]' % (epoch, loss))
+                    # Update the events file.
+                    summary_str = sess.run(summary, feed_dict={image_placeholder: imgs, label_placeholder: labels})
+                    summary_writer.add_summary(summary_str, epoch)
+                    summary_writer.flush()
 
             epoch_total_time = time.time() - epoch_start_time
             print('Epoch time:%.3f secs'% (epoch_total_time))
             duration = time.time() - start_time
-            if epoch % 3 == 0:
-                # Print status to stdout.
-                print('Step %d: loss = %.2f (%.3f sec)' % (epoch, loss, duration))
-                # Update the events file.
-                summary_str = sess.run(summary, feed_dict={image_placeholder:imgs, label_placeholder:labels})
-                summary_writer.add_summary(summary_str, epoch)
-                summary_writer.flush()
+
+            #if epoch % 3 == 0:
+            # Print status to stdout.
+            print('Step %d: loss = %.2f (%.3f sec)' % (epoch, loss, duration))
+            # Update the events file.
+            summary_str = sess.run(summary, feed_dict={image_placeholder:imgs, label_placeholder:labels})
+            summary_writer.add_summary(summary_str, epoch)
+            summary_writer.flush()
 
             if (epoch + 1) % 10 == 0 or (epoch + 1) == FLAGS.epochs:
                 print('Training Data Eval:')
