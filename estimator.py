@@ -8,6 +8,7 @@
 # <editor-fold desc="Main">
 import utilities as ut
 from carvana_target import CarvanaTarget
+from mnist_target import MNISTTarget
 import tensorflow as tf
 import time
 import os
@@ -18,18 +19,27 @@ def main():
     FLAGS, unparsed = ut.parseArgs()
     # TEST_DATA_PATH      = FLAGS.test_data_path
     SAMPLE_FILE = FLAGS.train_data_path + FLAGS.sample
-    IMG_SHAPE   = ut.get_image_shape(crop=FLAGS.crop, filename=SAMPLE_FILE,scale=FLAGS.scale)
+    IMG_SHAPE   = ut.get_image_shape(crop=FLAGS.crop, filename=SAMPLE_FILE, scale=FLAGS.scale)
 
     if FLAGS.target == 'carvana':
         target = CarvanaTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,crop_images=FLAGS.crop,scale=FLAGS.scale)
+    elif FLAGS.target == 'mnist':
+        target = MNISTTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,crop_images=FLAGS.crop,scale=FLAGS.scale)
     else:
         return
 
 # set up graph
     with tf.Graph().as_default():
         (image_placeholder, label_placeholder) = target.get_graph_placeholders(img_shape=IMG_SHAPE, batch_size=FLAGS.batch_size)
-        (w1,w2,wl) = target.init_weights(pixel_num=IMG_SHAPE[0]*IMG_SHAPE[1]*IMG_SHAPE[2], hidden1_units=FLAGS.hidden1_units,hidden2_units=FLAGS.hidden2_units,num_classes=FLAGS.numclasses)
-        logits_op = target.inference(images_placeholder=image_placeholder,hidden1_units=FLAGS.hidden1_units,hidden2_units=FLAGS.hidden2_units,w1=w1,w2=w2,wl=wl)
+
+        wgts_tuple = target.init_weights(pixel_num=ut.pixnum_from_img_shape(IMG_SHAPE),
+                                         hidden1_units=FLAGS.hidden1_units,
+                                         hidden2_units=FLAGS.hidden2_units,
+                                         num_classes=FLAGS.numclasses)
+        logits_op = target.inference(images_placeholder=image_placeholder,
+                                     hidden1_units=FLAGS.hidden1_units,
+                                     hidden2_units=FLAGS.hidden2_units,
+                                     weights_tuple=wgts_tuple)
         evaluation_op = target.evaluation(logits=logits_op, labels=label_placeholder)
         loss_op = target.loss(logits=logits_op, labels=label_placeholder)
         train_op = target.training(learning_rate=FLAGS.learning_rate, loss_op=loss_op)

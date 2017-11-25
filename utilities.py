@@ -76,6 +76,7 @@ def parseArgs():
 import PIL.Image
 import numpy as np
 import matplotlib.pyplot as plt
+
 def get_image_shape(filename="SAMPLE_MNIST_FILE", crop =True, scale=1.0):
     import PIL.Image
     mm = PIL.Image.open(filename)
@@ -92,6 +93,13 @@ def get_image_shape(filename="SAMPLE_MNIST_FILE", crop =True, scale=1.0):
 #    mma = mma.flatten('F')
 
     return mma.shape
+
+def pixnum_from_img_shape(img_shape):
+    pixel_num = 1
+    for t in img_shape:
+        pixel_num *= t
+
+    return pixel_num
 
 def read_image(path, fname, show, scale=1.0, crop=False):
    mm = PIL.Image.open(path + fname)

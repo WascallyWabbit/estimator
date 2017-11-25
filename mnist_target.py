@@ -1,55 +1,28 @@
 from target import Target
+import tensorflow as tf
+import math
 import os
 import numpy as np
 import utilities as ut
-import tensorflow as tf
-import math
 from random import shuffle
 
-class CarvanaTarget(Target):
-
-    def get_tensor_list(self,  path, num_classes=16, num = None, onehot=False):
-        files = os.listdir(path)
-
-        if not files:
-            return None
-
-        jpgs = [f for f in files if f.endswith('jpg') or f.endswith('jpeg')] # this gets 'filename_37.jpg'
-        number_in_filename = [name_fragment.split('_')[1] for name_fragment in jpgs] # this gets '37.jpg'
-        number_in_filename = [name_fragment.split('.')[0] for name_fragment in number_in_filename] # this gets '37'
-        label_array = np.asarray(number_in_filename, dtype=np.int32) - 1
-        if onehot == True:
-            labels = np.zeros((len(label_array), num_classes))
-            labels[np.arange(len(label_array)), label_array] = 1
-        else:
-            labels = label_array
-
-        if num is None:
-            num = len(jpgs)
-
-        # return must be list of tuples (filename, label array [one-hot bool])
- #       self.tensorlist = list(zip(jpgs[:num], labels[:num]))
-        ret = list(zip(jpgs[:num], labels[:num]))
-        shuffle(ret)
-        return ret
-
-
-    def init_weights(self,pixel_num,hidden1_units,hidden2_units,num_classes):
+class MNISTTarget(Target):
+    def init_weights(self, pixel_num, hidden1_units, hidden2_units, num_classes):
         w1 = tf.truncated_normal([pixel_num, hidden1_units],
-                                      stddev=1.0 / math.sqrt(float(pixel_num)),
-                                      name='weights')
+                                 stddev=1.0 / math.sqrt(float(pixel_num)),
+                                 name='weights')
 
         w2 = tf.truncated_normal([hidden1_units, hidden2_units],
-                                      stddev=1.0 / math.sqrt(float(pixel_num)),
-                                      name='weights')
+                                 stddev=1.0 / math.sqrt(float(pixel_num)),
+                                 name='weights')
 
         wl = tf.truncated_normal([hidden2_units, num_classes],
-                                      stddev=1.0 / math.sqrt(float(hidden2_units)),
-                                      name='weights')
+                                 stddev=1.0 / math.sqrt(float(hidden2_units)),
+                                 name='weights')
 
-        return (w1,w2,wl)
+        return (w1, w2, wl)
 
-    def get_graph_placeholders(self, img_shape=None, batch_size=10, num_classes=16):
+    def get_graph_placeholders(self, img_shape=None, batch_size=10, num_classes=10):
         if img_shape == None:
             img_shape = self.img_shape
 
@@ -57,20 +30,19 @@ class CarvanaTarget(Target):
 
         # what about type here?
         images_placeholder = tf.placeholder(tf.float32, shape=(batch_size, pixel_num), name='Images')
-        labels_placeholder = tf.placeholder(tf.int32, shape=(batch_size), name='Labels')
+        labels_placeholder = tf.placeholder(tf.int32, shape=(batch_size, num_classes), name='Labels')
 
         return (images_placeholder, labels_placeholder)
-
-    def inference(self, images_placeholder, hidden1_units, hidden2_units, weights_tuple, num_classes = 16, img_shape=None):
+    def inference(self, images_placeholder, hidden1_units, hidden2_units, weights_tuple, num_classes=10,
+                  img_shape=None):
         if img_shape == None:
             img_shape = self.img_shape
-        pixel_num = ut.pixnum_from_img_shape(img_shape)
 
-        w1=weights_tuple[0]
+        w1 = weights_tuple[0]
         w2 = weights_tuple[1]
         wl = weights_tuple[2]
         with tf.name_scope('inference'):
-            #tf.summary.image(tensor=images_placeholder, max_outputs=3,name="Carvana_images")
+            # tf.summary.image(tensor=images_placeholder, max_outputs=3,name="Carvana_images")
             with tf.name_scope('hidden1'):
                 # weights = tf.truncated_normal([pixel_num, hidden1_units],
                 #                               stddev=1.0/math.sqrt(float(pixel_num)),
@@ -110,24 +82,23 @@ class CarvanaTarget(Target):
 
                 return logits
 
+    def evaluation(self, logits, labels):
+        with tf.name_scope('evaluation'):
+            #correct = tf.nn.in_top_k(logits,labels,4,name='correct_evaluation')
+#            tf.summary.scalar('Evaluation', correct)
+            rs = tf.reduce_sum(tf.cast(logits,tf.int32), name='Reduce_sum')
+            tf.summary.scalar('Reduced sum', rs)
+            return rs
 
     def loss(self,logits,labels):
         with tf.name_scope('loser'):
             labels=tf.to_int64(labels)
-            cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
                 labels=labels, logits=logits, name='xentropy')
 
             rm = tf.reduce_mean(cross_entropy, name='xentropy_mean')
             tf.summary.scalar('xentropy_reduced_mean', rm)
-            return  rm
-
-    def evaluation(self, logits, labels):
-        with tf.name_scope('evaluation'):
-            correct = tf.nn.in_top_k(logits,labels,4,name='correct_evaluation')
-#            tf.summary.scalar('Evaluation', correct)
-            rs = tf.reduce_sum(tf.cast(correct,tf.int32), name='Reduce_sum')
-            tf.summary.scalar('Reduced sum', rs)
-            return rs
+            return rm
 
     def training(self, loss_op, learning_rate):
         with tf.name_scope('training'):
@@ -138,23 +109,31 @@ class CarvanaTarget(Target):
             train_op = optimizer.minimize(loss_op, global_step=global_step)
             return train_op
 
-    def do_eval(self, sess, eval_op, pl_imgs, pl_labels, tensor_list, batch_size, data_path, crop, scale):
-        true_count = 0
-        steps_per_epoch = len(tensor_list) // batch_size
-        num_examples = steps_per_epoch * batch_size
-        for step in range(steps_per_epoch):
-            for tensors in ut.grouper(tensor_list, batch_size):
-                if tensors is None or len(tensors) < batch_size:
-                    break
-                tensor_batch=self.generator(tensors, path=data_path, crop=crop,scale=scale)
-                if len(tensor_batch) < batch_size:
-                    break
-                imgs = [tupl[0] for tupl in tensor_batch]
-                labels = [tupl[1] for tupl in tensor_batch]
-                true_count + sess.run(eval_op, feed_dict = {pl_imgs:imgs, pl_labels:labels})
+    def get_tensor_list(self, path, num_classes=10, num = None, onehot=False):
+        files = []
+        labels = []
+        for x in range(num_classes):
+            label = np.zeros(num_classes)
+            label[x] = 1
+            if os.path.exists(path + str(x) + '/'):
+                path_contains_digits = True
+                fpath = path + str(x) + '/'
+            else:
+                path_contains_digits = False
+                fpath = path
+            jpgs = [f for f in os.listdir(fpath) if f.endswith('jpg') or f.endswith('jpeg')]
+            for j in jpgs:
+                if path_contains_digits == True:
+                    files.append(str(x) + '/' + j)
+                else:
+                    files.append(j)
+                    
+                labels.append(label)
 
-            precision = float(true_count)/num_examples
-            print('Num examples: %d  Num correct: %d  Precision @ 1: %0.04f' %
-                  (num_examples, true_count, precision))
+        if num == None:
+            num = len(files)
 
+        ret = list(zip(files[:num], labels[:num]))
+        shuffle(ret)
+        return ret
 
