@@ -96,7 +96,6 @@ def main():
             print('Epoch time:%.3f secs'% (epoch_total_time))
             duration = time.time() - start_time
 
-            #if epoch % 3 == 0:
             # Print status to stdout.
             print('Step %d: loss = %.2f (%.3f sec)' % (epoch, loss, duration))
             # Update the events file.

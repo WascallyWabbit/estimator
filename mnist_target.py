@@ -30,7 +30,7 @@ class MNISTTarget(Target):
 
         # what about type here?
         images_placeholder = tf.placeholder(tf.float32, shape=(batch_size, pixel_num), name='Images')
-        labels_placeholder = tf.placeholder(tf.int32, shape=(None, num_classes), name='Labels')
+        labels_placeholder = tf.placeholder(tf.int32, shape=(batch_size), name='Labels')
 
         return (images_placeholder, labels_placeholder)
 
