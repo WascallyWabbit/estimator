@@ -30,19 +30,27 @@ def main():
 
 # set up graph
     with tf.Graph().as_default():
-        (image_placeholder, label_placeholder) = target.get_graph_placeholders(img_shape=IMG_SHAPE, batch_size=FLAGS.batch_size)
+        (image_placeholder, label_placeholder) = target.get_graph_placeholders(img_shape=IMG_SHAPE,
+                                                                               batch_size=FLAGS.batch_size)
 
         wgts_tuple = target.init_weights(pixel_num=ut.pixnum_from_img_shape(IMG_SHAPE),
                                          hidden1_units=FLAGS.hidden1_units,
                                          hidden2_units=FLAGS.hidden2_units,
                                          num_classes=FLAGS.numclasses)
+
         logits_op = target.inference(images_placeholder=image_placeholder,
                                      hidden1_units=FLAGS.hidden1_units,
                                      hidden2_units=FLAGS.hidden2_units,
                                      weights_tuple=wgts_tuple)
-        evaluation_op = target.evaluation(logits=logits_op, labels=label_placeholder)
-        loss_op = target.loss(logits=logits_op, labels=label_placeholder)
-        train_op = target.training(learning_rate=FLAGS.learning_rate, loss_op=loss_op)
+
+        evaluation_op = target.evaluation(logits=logits_op,
+                                          labels=label_placeholder)
+
+        loss_op = target.loss(logits=logits_op,
+                              labels=label_placeholder)
+
+        train_op = target.training(learning_rate=FLAGS.learning_rate,
+                                   loss_op=loss_op)
 
         # Create a saver for writing training checkpoints.
         saver = tf.train.Saver()
@@ -76,7 +84,7 @@ def main():
                 batch_start_time = time.time()
                 if tensors is None or len(tensors) < FLAGS.batch_size:
                     break
-                tensor_batch=target.generator(tensors,path=FLAGS.train_data_path, crop=FLAGS.crop,scale=FLAGS.scale)
+                tensor_batch=target.generator(tensors, path=FLAGS.train_data_path, crop=FLAGS.crop,scale=FLAGS.scale)
                 if tensor_batch == []:
                     break
                 imgs = [tupl[0] for tupl in tensor_batch]
@@ -114,6 +122,7 @@ def main():
                                data_path=FLAGS.train_data_path,
                                crop=FLAGS.crop,
                                scale=FLAGS.scale)
+
                 checkpoint_file = os.path.join(FLAGS.tb_dir, 'model.ckpt')
                 saver.save(sess, checkpoint_file, global_step=epoch)
                 # Evaluate against the training set.

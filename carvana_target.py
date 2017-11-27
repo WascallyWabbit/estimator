@@ -61,14 +61,22 @@ class CarvanaTarget(Target):
 
         return (images_placeholder, labels_placeholder)
 
-    def inference(self, images_placeholder, hidden1_units, hidden2_units, weights_tuple, num_classes = 16, img_shape=None):
+    def inference(self,
+                  images_placeholder,
+                  hidden1_units,
+                  hidden2_units,
+                  weights_tuple,
+                  num_classes = 16,
+                  img_shape=None):
+
         if img_shape == None:
             img_shape = self.img_shape
         pixel_num = ut.pixnum_from_img_shape(img_shape)
 
-        w1=weights_tuple[0]
+        w1 = weights_tuple[0]
         w2 = weights_tuple[1]
         wl = weights_tuple[2]
+
         with tf.name_scope('inference'):
             #tf.summary.image(tensor=images_placeholder, max_outputs=3,name="Carvana_images")
             with tf.name_scope('hidden1'):
