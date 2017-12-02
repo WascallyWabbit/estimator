@@ -78,21 +78,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def get_image_shape(filename="SAMPLE_MNIST_FILE", crop =True, scale=1.0):
-    import PIL.Image
-    mm = PIL.Image.open(filename)
-    if crop == True:
-        x0 = mm.width / 4
-        y0 = mm.height / 4
-        x1 = 3 * mm.width / 4
-        y1 = 3 * mm.height / 4
-        mm = mm.crop((x0, y0, x1, y1))
-    if scale != 1.0:
-        mm = mm.resize((int(mm.size[0] / scale), int(mm.size[1] / scale)))
-    mma = np.array(mm)
+    # import PIL.Image
+    # mm = PIL.Image.open(filename)
+    # if crop == True:
+    #     x0 = mm.width / 4
+    #     y0 = mm.height / 4
+    #     x1 = 3 * mm.width / 4
+    #     y1 = 3 * mm.height / 4
+    #     mm = mm.crop((x0, y0, x1, y1))
+    # if scale != 1.0:
+    #     mm = mm.resize((int(mm.size[0] / scale), int(mm.size[1] / scale)))
+    # mma = np.array(mm)
 
 #    mma = mma.flatten('F')
 
-    return mma.shape
+    img= read_image(filename=filename, show=False, crop=crop, scale=scale)
+
+    return img.shape
 
 def pixnum_from_img_shape(img_shape):
     pixel_num = 1
@@ -101,8 +103,11 @@ def pixnum_from_img_shape(img_shape):
 
     return pixel_num
 
-def read_image(path, fname, show, scale=1.0, crop=False):
-   mm = PIL.Image.open(path + fname)
+def read_image_split_path(path, fname, show, scale=1.0, crop=False):
+    return read_image(filename=path + fname, show=show, scale=scale, crop=crop)
+
+def read_image(filename, show, scale, crop):
+   mm = PIL.Image.open(filename)
    if crop==True:
        x0=mm.width/4
        y0=mm.height/4
@@ -117,28 +122,7 @@ def read_image(path, fname, show, scale=1.0, crop=False):
        plt.imshow(mm)
        plt.show()
 
-   #mm = mm.convert('F')
-   mma = np.array(mm)
-   mma = mma.flatten('F')
-   return mma
-
-
-   mm = PIL.Image.open(path + fname)
-   if crop==True:
-       x0=mm.width/4
-       y0=mm.height/4
-       x1 =3*mm.width/4
-       y1 = 3*mm.height/4
-       mm=mm.crop((x0,y0,x1,y1))
-
-   if scale != 1.0:
-       mm = mm.resize((int(mm.size[0]/scale), int(mm.size[1]/scale)))
-
-   if show == True:
-       plt.imshow(mm)
-       plt.show()
-
-   #mm = mm.convert('F')
+   mm = mm.convert('F')
    mma = np.array(mm)
    mma = mma.flatten('F')
    return mma
