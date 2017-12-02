@@ -17,13 +17,13 @@ class CarvanaTarget(Target):
         jpgs = [f for f in files if f.endswith('jpg') or f.endswith('jpeg')] # this gets 'filename_37.jpg'
         number_in_filename = [name_fragment.split('_')[1] for name_fragment in jpgs] # this gets '37.jpg'
         number_in_filename = [name_fragment.split('.')[0] for name_fragment in number_in_filename] # this gets '37'
-        #label_array = np.asarray(number_in_filename, dtype=np.int32) - 1
+        label_array = np.asarray(number_in_filename, dtype=np.int32) - 1
         if onehot == True:
-            label_array = np.asarray(number_in_filename, dtype=np.int32) - 1
+        #    label_array = np.asarray(number_in_filename, dtype=np.int32) - 1
             labels = np.zeros((len(label_array), num_classes))
             labels[np.arange(len(label_array)), label_array] = 1
         else:
-            label_array = np.asarray(number_in_filename, dtype=np.int32)
+         #   label_array = np.asarray(number_in_filename, dtype=np.int32)
             labels = label_array
 
         if num is None:
