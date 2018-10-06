@@ -4,7 +4,7 @@ import math
 import os
 import utilities as ut
 from random import shuffle
-#--target mnist --numclasses 10 --train_data_path "/users/eric fowler/downloads/mnist/trainingSet/" --test_data_path "/users/eric fowler/downloads/mnist/testSet/"  --sample 0/img_1.jpg  --batch_size 64 --tb_dir  "\Users\Eric Fowler\tensorlog\mine" --learning_rate 0.001 --epochs 2
+
 class MNISTTarget(Target):
     def init_weights(self, pixel_num, hidden1_units, hidden2_units, num_classes):
         w1 = tf.truncated_normal([pixel_num, hidden1_units],
@@ -15,11 +15,11 @@ class MNISTTarget(Target):
                                  stddev=1.0 / math.sqrt(float(pixel_num)),
                                  name='weights')
 
-        wl = tf.truncated_normal([hidden2_units, num_classes],
+        w3 = tf.truncated_normal([hidden2_units, num_classes],
                                  stddev=1.0 / math.sqrt(float(hidden2_units)),
                                  name='weights')
 
-        return (w1, w2, wl)
+        return (w1, w2, w3)
 
     def get_graph_placeholders(self, img_shape=None, batch_size=10, num_classes=10):
         if img_shape == None:
@@ -39,9 +39,6 @@ class MNISTTarget(Target):
 
         pixel_num = ut.pixnum_from_img_shape(img_shape)
 
-        # w1 = weights_tuple[0]
-        # w2 = weights_tuple[1]
-        # wl = weights_tuple[2]
  #       with tf.name_scope('inference'):
  #       display_tensor = tf.reshape(tensor=images_placeholder, shape=[100,28,28,1])
   #      tf.summary.image(tensor=display_tensor, max_outputs=3,name="Carvana_images")
@@ -119,17 +116,9 @@ class MNISTTarget(Target):
         files = []
         labels = []
 
-        # if onehot == True:
-        #     labels = np.zeros((len(label_array), num_classes))
-        #     labels[np.arange(len(label_array)), label_array] = 1
-        # else:
-        #     labels = label_array
-
         for x in range(num_classes):
             label=x
- #turn this on for onehot encoding
- #           label = np.zeros(num_classes)
- #           label[x] = 1
+
             if os.path.exists(path + str(x) + '/'):
                 path_contains_digits = True
                 fpath = path + str(x) + '/'

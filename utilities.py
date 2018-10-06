@@ -48,12 +48,12 @@ def parseArgs():
     # parser.add_argument('--num_train_images', type=int,
     #                     default=200000,
     #                     help='Number of images to train')
-    parser.add_argument('--crop', type=bool,
-                        default=False,
-                        help='Crop images for speed?')
-    # parser.add_argument('--show', type=bool,
+    # parser.add_argument('--crop', type=bool,
     #                     default=False,
-    #                     help='Show some images?')
+    #                     help='Crop images for speed?')
+    parser.add_argument('--show', type=bool,
+                        default=False,
+                        help='Show some images?')
     parser.add_argument('--scale', type=float,
                         default=1.0,
                         help='Scaling factor for images')
@@ -69,30 +69,32 @@ def parseArgs():
     parser.add_argument('--tb_dir', type=str,
                         default='/Users/eric fowler/tensorlog/',
                         help='Directory For Tensorboard log')
+    parser.add_argument('--process', type=str,
+                        default='shi-tomasi',
+                        help='Edge finding process, \'shi-tomasi\' or \'harris\'')
 
     return parser.parse_known_args()
 
 
-import PIL.Image
+from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
-def get_image_shape(filename="SAMPLE_MNIST_FILE", crop =True, scale=1.0):
-    # import PIL.Image
-    # mm = PIL.Image.open(filename)
-    # if crop == True:
-    #     x0 = mm.width / 4
-    #     y0 = mm.height / 4
-    #     x1 = 3 * mm.width / 4
-    #     y1 = 3 * mm.height / 4
-    #     mm = mm.crop((x0, y0, x1, y1))
-    # if scale != 1.0:
-    #     mm = mm.resize((int(mm.size[0] / scale), int(mm.size[1] / scale)))
-    # mma = np.array(mm)
+def scale_image(img, scale=1.0):
+    if scale != 1.0:
+        img = np.array(img)
+        s = img.shape
+        img = cv2.resize(src=img, dsize=(int(s[1] // scale), int(s[0] // scale)))
+    return img
 
-#    mma = mma.flatten('F')
+def flatten_image(img):
+    img = img.flatten('F')
+    return img
 
-    img= read_image(filename=filename, show=False, crop=crop, scale=scale)
+def get_image_shape(filename, scale, show=False):
+    img = read_image(filename=filename, show=show)
+    img = scale_image(img=img, scale=scale)
 
     return img.shape
 
@@ -103,33 +105,45 @@ def pixnum_from_img_shape(img_shape):
 
     return pixel_num
 
-def read_image_split_path(path, fname, show, scale=1.0, crop=False):
-    return read_image(filename=path + fname, show=show, scale=scale, crop=crop)
+def read_image_split_path(path, fname, show):
+    return read_image(filename=path + fname, show=show)
 
-def read_image(filename, show, scale, crop):
-   mm = PIL.Image.open(filename)
-   if crop==True:
-       x0=mm.width/4
-       y0=mm.height/4
-       x1 =3*mm.width/4
-       y1 = 3*mm.height/4
-       mm=mm.crop((x0,y0,x1,y1))
-
-   if scale != 1.0:
-       mm = mm.resize((int(mm.size[0]/scale), int(mm.size[1]/scale)))
+def read_image(filename, show):
+   mm = cv2.imread(filename)
+   mm = cv2.cvtColor(mm, cv2.COLOR_BGR2GRAY)
 
    if show == True:
        plt.imshow(mm)
        plt.show()
 
-   mm = mm.convert('F')
-   mma = np.array(mm)
-   mma = mma.flatten('F')
-   return mma
+#   mm = mm.convert('F')
+
+   return mm
+
+def find_edges(img, process):
+    if process=='shi-tomasi':
+        #corners = cv2.goodFeaturesToTrack(img, maxCorners=2500, qualityLevel=0.001, minDistance=2, mask=-1)
+        corners = cv2.goodFeaturesToTrack(img, 2500, 0.001, 2)
+        corners = np.int0(corners)
+        img = np.full_like(img, 255)
+
+        for i in corners:
+            x, y = i.ravel()
+            cv2.circle(img, (x, y), 10, (0, 0, 0), -1)
+
+    elif process == 'harris':
+        corners = cv2.cornerHarris(img, 8, 3, 0.01)
+        x = corners.max()
+        img[np.abs(corners) > 0.01 * corners.max()] = [255, 0, 0]
+        img1 = img[:, :, 0]
+        img = img1 - corners
+
+    return img
+
 
 import itertools as it
 import sys
-import math
+
 if sys.version[0]=='2':
     it.zip_longest=it.izip_longest
 

@@ -19,18 +19,15 @@ class CarvanaTarget(Target):
         number_in_filename = [name_fragment.split('.')[0] for name_fragment in number_in_filename] # this gets '37'
         label_array = np.asarray(number_in_filename, dtype=np.int32) - 1
         if onehot == True:
-        #    label_array = np.asarray(number_in_filename, dtype=np.int32) - 1
             labels = np.zeros((len(label_array), num_classes))
             labels[np.arange(len(label_array)), label_array] = 1
         else:
-         #   label_array = np.asarray(number_in_filename, dtype=np.int32)
             labels = label_array
 
         if num is None:
             num = len(jpgs)
 
         # return must be list of tuples (filename, label array [one-hot bool])
- #       self.tensorlist = list(zip(jpgs[:num], labels[:num]))
         ret = list(zip(jpgs[:num], labels[:num]))
         shuffle(ret)
         return ret
@@ -40,22 +37,22 @@ class CarvanaTarget(Target):
         w1 = tf.Variable(
             tf.truncated_normal([pixel_num, hidden1_units],
                                       stddev=1.0 / math.sqrt(float(pixel_num)),
-                                      name='weights')
+                                      name='weights1')
         )
 
         w2 = tf.Variable(
             tf.truncated_normal([hidden1_units, hidden2_units],
                                       stddev=1.0 / math.sqrt(float(pixel_num)),
-                                      name='weights')
+                                      name='weights2')
         )
 
-        wl = tf.Variable(
+        w3 = tf.Variable(
             tf.truncated_normal([hidden2_units, num_classes],
                                       stddev=1.0 / math.sqrt(float(hidden2_units)),
-                                      name='weights')
+                                      name='weights3')
         )
 
-        return (w1,w2,wl)
+        return (w1,w2,w3)
 
     def get_graph_placeholders(self, img_shape=None, batch_size=10, num_classes=16):
         if img_shape == None:
@@ -63,7 +60,6 @@ class CarvanaTarget(Target):
 
         pixel_num = ut.pixnum_from_img_shape(img_shape)
 
-        # what about type here?
         images_placeholder = tf.placeholder(tf.float32, shape=(batch_size, pixel_num), name='Images')
         labels_placeholder = tf.placeholder(tf.int32, shape=(batch_size), name='Labels')
 
@@ -81,74 +77,77 @@ class CarvanaTarget(Target):
         pixel_num = ut.pixnum_from_img_shape(img_shape)
 
 
- #       with tf.name_scope('inference'):
-            #tf.summary.image(tensor=images_placeholder, max_outputs=3,name="Carvana_images")
-        with tf.name_scope('hidden1'):
-            weights = tf.Variable(
-                tf.truncated_normal([pixel_num, hidden1_units],
-                                          stddev=1.0/math.sqrt(float(pixel_num))),
-                                          name='weights')
-            biases = tf.Variable(tf.zeros([hidden1_units]),
-                                 name='biases')
+        with tf.name_scope('inference'):
+            #       with tf.name_scope('inference'):
+            #       display_tensor = tf.reshape(tensor=images_placeholder, shape=[100,28,28,1])
+            #      tf.summary.image(tensor=display_tensor, max_outputs=3,name="Carvana_images")
+            display_tensor = tf.reshape(tensor=images_placeholder, shape=[64,img_shape[1],img_shape[0],1])
+            tf.summary.image(tensor=display_tensor, max_outputs=320,name="Carvana_images")
 
-            hidden1 = tf.nn.relu(tf.matmul(images_placeholder, weights) + biases)
+            with tf.name_scope('hidden1'):
+                weights1 = tf.Variable(
+                    tf.truncated_normal([pixel_num, hidden1_units],
+                                              stddev=1.0/math.sqrt(float(pixel_num))),
+                                              name='weights1')
+                biases1 = tf.Variable(tf.zeros([hidden1_units]),
+                                     name='biases1')
 
-
-        with tf.name_scope('hidden2'):
-            weights = tf.Variable(
-                tf.truncated_normal([hidden1_units, hidden2_units],
-                                          stddev=1.0 / math.sqrt(float(hidden1_units))),
-                                          name='weights')
-            biases = tf.Variable(tf.zeros([hidden2_units]),
-                                 name='biases')
-
-            hidden2 = tf.nn.relu(tf.matmul(hidden1, weights) + biases)
+                hidden1 = tf.nn.relu(tf.matmul(images_placeholder, weights1) + biases1)
+                tf.summary.histogram(name='weights1', values=weights1)
+                tf.summary.histogram(name='biases1', values=biases1)
 
 
-        with tf.name_scope('softmax_linear'):
-            weights = tf.Variable(
-                tf.truncated_normal([hidden2_units, num_classes],
-                                          stddev=1.0 / math.sqrt(float(hidden2_units))),
-                name='weights')
-            biases = tf.Variable(tf.zeros([num_classes]),
-                                 name='biases')
+            with tf.name_scope('hidden2'):
+                weights2 = tf.Variable(
+                    tf.truncated_normal([hidden1_units, hidden2_units],
+                                              stddev=1.0 / math.sqrt(float(hidden1_units))),
+                                              name='weights2')
+                biases2 = tf.Variable(tf.zeros([hidden2_units]),
+                                     name='biases2')
 
-            logits = tf.nn.softmax(tf.matmul(hidden2, weights) + biases)
+                hidden2 = tf.nn.relu(tf.matmul(hidden1, weights2) + biases2)
+                tf.summary.histogram(name='weights2', values=weights2)
+                tf.summary.histogram(name='biases2', values=biases2)
 
-            # tf.summary.histogram(name='weights', values=weights)
-            # tf.summary.histogram(name='biases', values=biases)
-            # tf.summary.histogram(name='logits', values=logits)
+            with tf.name_scope('softmax_linear'):
+                weights3 = tf.Variable(
+                    tf.truncated_normal([hidden2_units, num_classes],
+                                              stddev=1.0 / math.sqrt(float(hidden2_units))),
+                    name='weights3')
+                biases3 = tf.Variable(tf.zeros([num_classes]),
+                                     name='biases3')
+
+                logits = tf.nn.softmax(tf.matmul(hidden2, weights3) + biases3)
+
+                tf.summary.histogram(name='weights3', values=weights3)
+                tf.summary.histogram(name='biases3', values=biases3)
+                tf.summary.histogram(name='logits', values=logits)
 
             return logits
 
-
     def loss(self,logits,labels):
-#        with tf.name_scope('loser'):
-        labels=tf.to_int64(labels)
-        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=labels, logits=logits, name='xentropy')
+        with tf.name_scope('loser'):
+            labels=tf.to_int64(labels)
+            cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                labels=labels, logits=logits, name='xentropy')
 
-        rm = tf.reduce_mean(cross_entropy, name='xentropy_mean')
-        tf.summary.scalar('xentropy_reduced_mean', rm)
-        return rm
+            rm = tf.reduce_mean(cross_entropy, name='xentropy_mean')
+            tf.summary.scalar('xentropy_reduced_mean', rm)
+            return rm
 
     def evaluation(self, logits, labels):
         with tf.name_scope('evaluation'):
             correct = tf.nn.in_top_k(logits,labels,1,name='correct_evaluation')
-#            tf.summary.scalar('Evaluation', correct)
+        #    tf.summary.scalar('Evaluation', correct)
             rs = tf.reduce_sum(tf.cast(correct,tf.int32), name='Reduce_sum')
             tf.summary.scalar('Reduced sum', rs)
-            return rs
+            return correct
 
     def training(self, loss_op, learning_rate):
         with tf.name_scope('training'):
             tf.summary.scalar('Training loss_op', loss_op)
-            optimizer = tf.train.GradientDescentOptimizer(learning_rate, name='Gradient_Descent_Optimizificator')
+            optimizer = tf.train.AdamOptimizer(learning_rate, name='Adam_Optimizer')
             global_step = tf.Variable(0, name='global_step', trainable=False)
             tf.summary.scalar('Training global_step', global_step)
             train_op = optimizer.minimize(loss_op, global_step=global_step)
             return train_op
-
-
-
-

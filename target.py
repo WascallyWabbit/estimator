@@ -2,29 +2,29 @@ import utilities as ut
 import tensorflow as tf
 
 class Target:
-    def __init__(self, path, sample, crop_images = True, num_pixels=None, scale=1.0):
+    def __init__(self, path, sample, num_pixels=None, scale=1.0):
         self.path = path
         self.sample = sample
-        self.crop_images = crop_images
-        self.img_shape = ut.get_image_shape(self.sample, crop=self.crop_images,scale=scale) if num_pixels == None else num_pixels
+        self.img_shape = ut.get_image_shape(filename=self.sample, scale=scale) if num_pixels == None else num_pixels
 
 
-    def generator(self, tensors, path, crop,scale):
+    def generator(self, tensors, path, scale, process):
         ret = []
         try:
             for fn, l in tensors:
-                img = ut.read_image_split_path(path=path, fname=fn, show=False, crop=crop, scale=scale)
-                #print('One image:'+fn)
+                img = ut.read_image_split_path(path=path, fname=fn, show=False)
+                img = ut.find_edges(img=img, process=process)
+                img = ut.scale_image(img=img, scale=scale)
+                img = ut.flatten_image(img=img)
                 ret.append((img,l))
 
         except TypeError as te:
-            #print("Got a TypeError, tensors are {tensors}, path is {path}, crop is {crop}, scale is {scale}".format(tensors=tensors, path=path, crop=crop, scale=scale))
+            print("Got a TypeError, scale is {scale}, message is {message}".format(tensors=tensors, path=path, message=te.args[0], scale=scale))
             return []
 
         return ret
 
-    def do_eval(self, sess, eval_op, pl_imgs, pl_labels, tensor_list, batch_size, data_path, crop, scale):
-
+    def do_eval(self, sess, eval_op, pl_imgs, pl_labels, tensor_list, batch_size, data_path, scale, process):
         steps_per_epoch = len(tensor_list) // batch_size
         num_examples = steps_per_epoch * batch_size
         #for step in range(steps_per_epoch):
@@ -32,7 +32,7 @@ class Target:
         for tensors in ut.grouper(tensor_list, batch_size):
             if tensors is None or len(tensors) < batch_size:
                 break
-            tensor_batch = self.generator(tensors, path=data_path, crop=crop, scale=scale)
+            tensor_batch = self.generator(tensors, path=data_path, scale=scale,process=process)
             if len(tensor_batch) < batch_size:
                 break
             imgs = [tupl[0] for tupl in tensor_batch]

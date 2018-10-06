@@ -17,14 +17,15 @@ import sys
 def main():
     # <editor-fold desc="Process parameters into globals">
     FLAGS, unparsed = ut.parseArgs()
+    print(FLAGS)
     # TEST_DATA_PATH      = FLAGS.test_data_path
     SAMPLE_FILE = FLAGS.train_data_path + FLAGS.sample
-    IMG_SHAPE   = ut.get_image_shape(crop=FLAGS.crop, filename=SAMPLE_FILE, scale=FLAGS.scale)
+    IMG_SHAPE   = ut.get_image_shape(filename=SAMPLE_FILE, scale=FLAGS.scale,show=FLAGS.show)
 
     if FLAGS.target == 'carvana':
-        target = CarvanaTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,crop_images=FLAGS.crop,scale=FLAGS.scale)
+        target = CarvanaTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,scale=FLAGS.scale)
     elif FLAGS.target == 'mnist':
-        target = MNISTTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,crop_images=FLAGS.crop,scale=FLAGS.scale)
+        target = MNISTTarget(path=FLAGS.train_data_path,sample=SAMPLE_FILE,scale=FLAGS.scale)
     else:
         return
 
@@ -33,15 +34,9 @@ def main():
         (image_placeholder, label_placeholder) = target.get_graph_placeholders(img_shape=IMG_SHAPE,
                                                                                batch_size=FLAGS.batch_size)
 
-        # wgts_tuple = target.init_weights(pixel_num=ut.pixnum_from_img_shape(IMG_SHAPE),
-        #                                  hidden1_units=FLAGS.hidden1_units,
-        #                                  hidden2_units=FLAGS.hidden2_units,
-        #                                  num_classes=FLAGS.numclasses)
-
         logits_op = target.inference(images_placeholder=image_placeholder,
                                      hidden1_units=FLAGS.hidden1_units,
                                      hidden2_units=FLAGS.hidden2_units)
-           #                          weights_tuple=wgts_tuple)
 
         loss_op = target.loss(logits=logits_op,
                               labels=label_placeholder)
@@ -60,7 +55,6 @@ def main():
         # Create a saver for writing training checkpoints.
         #saver = tf.train.Saver()
 
-        #sess = tf.InteractiveSession(config = tf.ConfigProto(log_device_placement=True))
         sess = tf.Session()
 
         # Instantiate a SummaryWriter to output summaries and the Graph.
@@ -68,7 +62,6 @@ def main():
 
         sess.run(init)
 
-        #gvi.run(session=sess)
         start_time = time.time()
 
 #chop list into chunx, process each one
@@ -78,7 +71,6 @@ def main():
             # get tensor lists
             # get train, test, validate(?) lists
             tensor_list = target.get_tensor_list(path=FLAGS.train_data_path, onehot=False)
-            #tensor_list_test = target.get_tensor_list(path=FLAGS.test_data_path, onehot=False)
             tensor_list_train = tensor_list[:7*len(tensor_list)//8]
             tensor_list_test = tensor_list[7 * len(tensor_list) // 8:]
             tensor_list = []
@@ -87,13 +79,14 @@ def main():
             batches = len(tensor_list_train) // FLAGS.batch_size
             for tensors in ut.grouper(tensor_list_train,FLAGS.batch_size):
                 batch_num += 1
-                #sys.stdout.write('Batch {batch_num} of {batches} batches.'.format(batch_num=batch_num, batches=batches))
                 batch_start_time = time.time()
                 if tensors is None or len(tensors) < FLAGS.batch_size:
                     break
-                tensor_batch=target.generator(tensors, path=FLAGS.train_data_path, crop=FLAGS.crop,scale=FLAGS.scale)
+
+                tensor_batch=target.generator(tensors, path=FLAGS.train_data_path,scale=FLAGS.scale, process=FLAGS.process)
                 if tensor_batch == []:
                     break
+
                 imgs    =    [tupl[0] for tupl in tensor_batch]
                 labels  =    [tupl[1] for tupl in tensor_batch]
 
@@ -114,9 +107,6 @@ def main():
             # Print status to stdout.
             print('Step %d: loss = %.2f (%.3f sec)' % (epoch, loss, duration))
             # # Update the events file.
-            # summary_str = sess.run(summary, feed_dict={image_placeholder:imgs, label_placeholder:labels})
-            # summary_writer.add_summary(summary_str, epoch)
-            # summary_writer.flush()
 
             if epoch % 10 == 0 or (epoch + 1) == FLAGS.epochs:
                 print('Training Data Eval:')
@@ -127,8 +117,8 @@ def main():
                                tensor_list=tensor_list_train,
                                batch_size=FLAGS.batch_size,
                                data_path=FLAGS.train_data_path,
-                               crop=FLAGS.crop,
-                               scale=FLAGS.scale)
+                               scale=FLAGS.scale,
+                               process=FLAGS.process)
 
                 #checkpoint_file = os.path.join(FLAGS.tb_dir, 'model.ckpt')
                 #saver.save(sess, checkpoint_file, global_step=epoch)
@@ -142,8 +132,8 @@ def main():
                                tensor_list=tensor_list_test,
                                batch_size=FLAGS.batch_size,
                                data_path=FLAGS.train_data_path,
-                               crop=FLAGS.crop,
-                               scale=FLAGS.scale)
+                               scale=FLAGS.scale,
+                               process=FLAGS.process)
 
     pass
 
